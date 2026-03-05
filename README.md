@@ -1,25 +1,26 @@
-# 🤖 TalentScout — AI-Powered Hiring Assistant
+# TalentScout — AI-Powered Hiring Assistant
 
 An intelligent chatbot built with **Python** and **Streamlit** that conducts initial candidate screening interviews for a fictional recruitment agency. Powered by **Groq AI (LLaMA 3.3 70B)**, it collects candidate information through natural conversation and generates tailored technical assessment questions.
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Project Overview](#-project-overview)
-- [Features](#-features)
-- [Demo](#-demo)
-- [Installation](#-installation)
-- [Usage Guide](#-usage-guide)
-- [Project Structure](#-project-structure)
-- [Technical Details](#-technical-details)
-- [Prompt Design](#-prompt-design)
-- [Data Handling & Privacy](#-data-handling--privacy)
-- [Challenges & Solutions](#-challenges--solutions)
+- [Project Overview](#project-overview)
+- [Features](#features)
+- [Demo](#demo)
+- [Installation](#installation)
+- [Usage Guide](#usage-guide)
+- [Project Structure](#project-structure)
+- [Technical Details](#technical-details)
+- [Prompt Design](#prompt-design)
+- [Data Handling & Privacy](#data-handling--privacy)
+- [Bonus Features](#bonus-features)
+- [Challenges & Solutions](#challenges--solutions)
 
 ---
 
-## 🎯 Project Overview
+## Project Overview
 
 **TalentScout** is an AI Hiring Assistant chatbot designed to streamline the initial candidate screening process for a recruitment agency specializing in technology placements. Instead of static application forms, candidates interact with an intelligent conversational agent that:
 
@@ -29,7 +30,7 @@ An intelligent chatbot built with **Python** and **Streamlit** that conducts ini
 
 ---
 
-## ✨ Features
+## Features
 
 ### Core Features
 | Feature | Description |
@@ -41,6 +42,8 @@ An intelligent chatbot built with **Python** and **Streamlit** that conducts ini
 | **Exit Handling with Follow-up** | Asks candidates once to complete pending fields before ending |
 | **Real-time Progress Tracking** | Sidebar dashboard shows collected fields and completion percentage |
 | **Data Privacy (GDPR)** | PII masking (email, phone) before saving to disk |
+| **Sentiment Analysis** | Real-time detection of candidate mood (confident, enthusiastic, neutral, nervous, frustrated) |
+| **Multilingual Support** | Interview in 8 languages: English, Hindi, Spanish, French, German, Chinese, Japanese, Arabic |
 
 ### Technical Highlights
 - **Entity Extraction** — LLM-powered JSON extraction from freeform text
@@ -51,22 +54,24 @@ An intelligent chatbot built with **Python** and **Streamlit** that conducts ini
 
 ---
 
-## 🖥️ Demo
+## Demo
 
 ### Conversation Flow
 ```
 Greeting → Info Collection (7 fields) → Technical Assessment (3-5 Qs) → Sign-off
 ```
 
-### Sidebar Progress Tracker
+### Sidebar Dashboard
 The sidebar shows real-time progress with:
+- **Language selector** — Choose interview language from 8 options
 - Current interview stage indicator
 - Individual field status cards (Pending / Collected)
 - Gradient completion bar (0-100%)
+- **Candidate Mood indicator** — Live sentiment analysis
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ### Prerequisites
 - Python 3.10 or higher
@@ -76,8 +81,8 @@ The sidebar shows real-time progress with:
 
 ```bash
 # 1. Clone the repository
-git clone <repository-url>
-cd AI_ML_Intern_Assignment
+git clone https://github.com/ram-49-kaps/TalentScout-AI-Powered-Hiring-Assistant.git
+cd TalentScout-AI-Powered-Hiring-Assistant
 
 # 2. Create a virtual environment (recommended)
 python3 -m venv venv
@@ -106,12 +111,13 @@ python-dotenv>=1.0.1   # Environment variable management
 
 ---
 
-## 📖 Usage Guide
+## Usage Guide
 
 ### Starting an Interview
 1. Launch the app with `streamlit run app.py`
-2. The chatbot will greet you and ask for your name
-3. Provide your information naturally — you can give multiple details in one message
+2. **Select your language** from the sidebar dropdown (default: English)
+3. The chatbot will greet you and ask for your name
+4. Provide your information naturally — you can give multiple details in one message
 
 ### Example Conversation
 ```
@@ -147,14 +153,14 @@ Type any of these to end the conversation:
 > **Note:** If you have pending fields, the bot will gently ask once if you'd like to complete them before leaving.
 
 ### Starting a New Interview
-Click the **"🔄 Start New Interview"** button in the sidebar to reset everything.
+Click the **"Start New Interview"** button in the sidebar to reset everything.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-AI_ML_Intern_Assignment/
+TalentScout-AI-Powered-Hiring-Assistant/
 ├── app.py                  # Streamlit UI — frontend, chat interface, sidebar
 ├── chatbot_engine.py       # Core logic — state machine, LLM calls, entity extraction
 ├── prompts.py              # All prompt templates — persona, extraction, questions
@@ -173,13 +179,13 @@ AI_ML_Intern_Assignment/
 | Module | Purpose |
 |--------|---------|
 | `app.py` | Streamlit frontend — page layout, custom CSS, session state, chat rendering |
-| `chatbot_engine.py` | Conversation state machine, Groq API integration, entity extraction, question generation |
-| `prompts.py` | Centralized prompt templates for all LLM interactions |
+| `chatbot_engine.py` | Conversation state machine, Groq API integration, entity extraction, question generation, sentiment analysis |
+| `prompts.py` | Centralized prompt templates for all LLM interactions (11 templates) |
 | `data_manager.py` | Email/phone validation, tech stack parsing, PII masking, JSON persistence |
 
 ---
 
-## ⚙️ Technical Details
+## Technical Details
 
 ### Architecture Overview
 ```
@@ -201,11 +207,16 @@ AI_ML_Intern_Assignment/
 │  │ Question Gen     │  │  │  Groq API (LLaMA 3)  │    │
 │  │ (3-5 Qs)         │──┤  │  + Retry Logic       │    │
 │  └─────────────────┘  │  └──────────────────────┘    │
+│           │           │                               │
+│  ┌────────▼────────┐  │  ┌──────────────────────┐    │
+│  │ Sentiment        │  │  │  Multilingual        │    │
+│  │ Analysis         │──┤  │  Support (8 langs)   │    │
+│  └─────────────────┘  │  └──────────────────────┘    │
 │                       │                               │
 ├───────────────────────┼───────────────────────────────┤
 │            prompts.py │        data_manager.py        │
 │  ┌─────────────────┐  │  ┌──────────────────────┐    │
-│  │  9 Prompt        │  │  │  Validation          │    │
+│  │  11 Prompt       │  │  │  Validation          │    │
 │  │  Templates       │  │  │  Masking (GDPR)      │    │
 │  │                  │  │  │  JSON Persistence    │    │
 │  └─────────────────┘  │  └──────────────────────┘    │
@@ -238,7 +249,7 @@ GREETING ──► INFO_COLLECTION ──► TECH_ASSESSMENT ──► SIGN_OFF 
 
 ---
 
-## 🎨 Prompt Design
+## Prompt Design
 
 ### Design Philosophy
 All prompts are centralized in `prompts.py` using a **template-based approach** with clear placeholders. Each prompt is engineered to:
@@ -281,9 +292,19 @@ All prompts are centralized in `prompts.py` using a **template-based approach** 
 - Case-insensitive substring matching for natural language flexibility
 - **Key design choice**: First exit attempt with pending fields triggers a gentle follow-up
 
+#### 7. Sentiment Analysis (`SENTIMENT_PROMPT`)
+- Classifies candidate mood into 5 categories: confident, enthusiastic, neutral, nervous, frustrated
+- Single-word output for reliable parsing
+- **Key design choice**: Runs on every message to provide real-time mood tracking in the sidebar
+
+#### 8. Multilingual Instruction (`MULTILINGUAL_INSTRUCTION`)
+- Appended to the system prompt when a non-English language is selected
+- Forces all LLM responses to be in the chosen language
+- **Key design choice**: Supports 8 languages leveraging LLaMA 3.3's native multilingual training
+
 ---
 
-## 🔒 Data Handling & Privacy
+## Data Handling & Privacy
 
 ### Simulated Storage
 - **Mock Database**: Local JSON file (`data/candidates.json`)
@@ -322,7 +343,52 @@ All prompts are centralized in `prompts.py` using a **template-based approach** 
 
 ---
 
-## 🧩 Challenges & Solutions
+## Bonus Features
+
+### 1. Sentiment Analysis
+The chatbot analyzes the **emotional tone** of every candidate message in real-time using a dedicated LLM prompt. The detected sentiment is displayed in the sidebar as a live "Candidate Mood" indicator.
+
+| Mood | Indicator | When it appears |
+|------|-----------|-----------------|
+| Confident | Confident | Clear, self-assured responses |
+| Enthusiastic | Enthusiastic | Excited, eager answers |
+| Neutral | Neutral | Standard conversational tone |
+| Nervous | Nervous | Hesitant or unsure responses |
+| Frustrated | Frustrated | Impatient or dissatisfied messages |
+
+**Use case**: Recruiters can review sentiment alongside answers to gauge candidate engagement and comfort level during the screening process.
+
+### 2. Multilingual Support
+Candidates can select their preferred interview language from a **dropdown in the sidebar**. The entire conversation — greetings, questions, follow-ups — adapts to the selected language.
+
+**Supported Languages:**
+English, Hindi, Spanish, French, German, Chinese, Japanese, Arabic
+
+**How it works**: A `MULTILINGUAL_INSTRUCTION` is dynamically appended to the system prompt, instructing the LLM to respond entirely in the chosen language. Since LLaMA 3.3 70B is trained on multilingual data, it handles all 8 languages natively.
+
+### 3. Personalized Responses
+The chatbot generates **tailored technical questions** based on:
+- The candidate's declared **tech stack** (questions target specific technologies)
+- Their **years of experience** (difficulty scales: fundamentals → design → architecture)
+- Their **desired position** (questions are role-relevant)
+
+### 4. UI Enhancements
+- Animated gradient header with shimmer effect
+- Card-based field display with SVG line icons
+- Pulsing "Live Interview" badge with CSS animation
+- Custom gradient progress bar for completion tracking
+- Fade-in animations for chat messages
+- Premium color palette with CSS variables
+
+### 5. Performance Optimization
+- **Groq LPU inference**: 500+ tokens/second for near-instant responses
+- **Exponential backoff retry**: Handles rate limits gracefully (3s → 6s → 12s)
+- **Lightweight sentiment analysis**: Single-word LLM output for fast parsing
+- **Efficient state machine**: Deterministic transitions with no unnecessary API calls
+
+---
+
+## Challenges & Solutions
 
 ### 1. API Rate Limits (Gemini Free Tier)
 - **Challenge**: Google Gemini's free tier had strict per-minute quotas, causing frequent `429 Quota Exceeded` errors.
@@ -350,7 +416,7 @@ All prompts are centralized in `prompts.py` using a **template-based approach** 
 
 ---
 
-## 🛠️ Built With
+## Built With
 
 - **[Streamlit](https://streamlit.io/)** — Web interface and chat components
 - **[Groq](https://groq.com/)** — Ultra-fast LLM inference (LLaMA 3.3 70B)
@@ -359,10 +425,10 @@ All prompts are centralized in `prompts.py` using a **template-based approach** 
 
 ---
 
-## 📄 License
+## License
 
 This project was developed as part of an AI/ML Intern Assignment for TalentScout.
 
 ---
 
-*Built with ❤️ by Ram Kapadia | Powered by Groq AI*
+*Built by Ram Kapadia | Powered by Groq AI*

@@ -12,8 +12,10 @@ from chatbot_engine import (
     ConversationState,
     generate_greeting,
     process_message,
+    analyze_sentiment,
 )
 from data_manager import create_empty_candidate
+from prompts import SUPPORTED_LANGUAGES
 
 # ──────────────────────────────────────────────
 # Page Configuration
@@ -398,6 +400,12 @@ if "initialized" not in st.session_state:
 if "exit_pending" not in st.session_state:
     st.session_state.exit_pending = False
 
+if "sentiment" not in st.session_state:
+    st.session_state.sentiment = "neutral"
+
+if "language" not in st.session_state:
+    st.session_state.language = "English"
+
 
 # ──────────────────────────────────────────────
 # Header
@@ -420,6 +428,18 @@ st.markdown(f"""
 # ──────────────────────────────────────────────
 with st.sidebar:
     st.markdown('<div class="sidebar-title">Interview Dashboard</div>', unsafe_allow_html=True)
+
+    # Language Selector
+    selected_lang = st.selectbox(
+        "🌐 Interview Language",
+        options=list(SUPPORTED_LANGUAGES.keys()),
+        index=list(SUPPORTED_LANGUAGES.keys()).index(st.session_state.language),
+        key="lang_selector",
+    )
+    if selected_lang != st.session_state.language:
+        st.session_state.language = selected_lang
+
+    st.markdown("---")
 
     # Show current state — clean text labels
     state_labels = {
@@ -496,6 +516,26 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
+    # Sentiment Indicator
+    sentiment_config = {
+        "confident": ("😎", "Confident", "#10B981"),
+        "enthusiastic": ("🤩", "Enthusiastic", "#F59E0B"),
+        "neutral": ("😐", "Neutral", "#6B7280"),
+        "nervous": ("😰", "Nervous", "#EF4444"),
+        "frustrated": ("😤", "Frustrated", "#DC2626"),
+    }
+    s_emoji, s_label, s_color = sentiment_config.get(st.session_state.sentiment, ("😐", "Neutral", "#6B7280"))
+    st.markdown(f"""
+    <div style="margin: 0.8rem 0; padding: 10px 14px; border-radius: 10px;
+                background: rgba(108,99,255,0.06); border: 1px solid rgba(108,99,255,0.1);">
+        <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;
+                    color: var(--text-muted); margin-bottom: 4px;">Candidate Mood</div>
+        <div style="font-size: 1rem; font-weight: 600; color: {s_color};">
+            {s_emoji} {s_label}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
     # Reset button with spacing
     st.markdown("")
     if st.button("🔄 Start New Interview", use_container_width=True):
@@ -505,6 +545,8 @@ with st.sidebar:
         st.session_state.conversation_history = []
         st.session_state.initialized = False
         st.session_state.exit_pending = False
+        st.session_state.sentiment = "neutral"
+        st.session_state.language = "English"
         st.rerun()
 
     # Sidebar footer
@@ -560,12 +602,17 @@ if st.session_state.conversation_state != ConversationState.ENDED:
 
         # Process the message
         with st.spinner("Thinking..."):
+            # Analyze sentiment in parallel
+            sentiment = analyze_sentiment(user_input)
+            st.session_state.sentiment = sentiment
+
             next_state, response, updated_candidate, exit_flag = process_message(
                 user_message=user_input,
                 current_state=st.session_state.conversation_state,
                 candidate_data=st.session_state.candidate_data,
                 conversation_history=st.session_state.conversation_history,
                 exit_pending=st.session_state.exit_pending,
+                language=st.session_state.language,
             )
 
         # Update state

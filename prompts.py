@@ -213,3 +213,43 @@ def is_exit_command(message: str) -> bool:
     """Check if the user's message contains a conversation-ending keyword."""
     message_lower = message.strip().lower()
     return any(keyword in message_lower for keyword in EXIT_KEYWORDS)
+
+
+# ──────────────────────────────────────────────
+# 10. SENTIMENT ANALYSIS PROMPT
+# ──────────────────────────────────────────────
+SENTIMENT_PROMPT = """Analyze the sentiment/emotional tone of the following candidate message 
+in the context of a job screening interview.
+
+**Candidate's message:** {user_message}
+
+**Classify the sentiment as EXACTLY ONE of these categories:**
+- "confident" — The candidate sounds self-assured, clear, and positive.
+- "neutral" — Standard conversational tone, no strong emotion.
+- "enthusiastic" — The candidate sounds excited, eager, or very interested.
+- "nervous" — The candidate sounds unsure, hesitant, or anxious.
+- "frustrated" — The candidate sounds annoyed, impatient, or dissatisfied.
+
+**Return ONLY the single word (lowercase) — nothing else.**"""
+
+
+# ──────────────────────────────────────────────
+# 11. MULTILINGUAL SUPPORT
+# ──────────────────────────────────────────────
+SUPPORTED_LANGUAGES = {
+    "English": "English",
+    "Hindi": "Hindi (हिन्दी)",
+    "Spanish": "Spanish (Español)",
+    "French": "French (Français)",
+    "German": "German (Deutsch)",
+    "Chinese": "Chinese (中文)",
+    "Japanese": "Japanese (日本語)",
+    "Arabic": "Arabic (العربية)",
+}
+
+MULTILINGUAL_INSTRUCTION = """
+
+**CRITICAL LANGUAGE INSTRUCTION:**
+You MUST respond ENTIRELY in {language}. Every word of your response must be in {language}.
+Do NOT mix languages. If the candidate writes in another language, still respond in {language}.
+"""

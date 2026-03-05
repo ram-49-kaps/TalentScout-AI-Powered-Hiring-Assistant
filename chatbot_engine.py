@@ -29,6 +29,8 @@ from prompts import (
     ANSWER_COLLECTION_PROMPT,
     SIGNOFF_PROMPT,
     FALLBACK_PROMPT,
+    SENTIMENT_PROMPT,
+    MULTILINGUAL_INSTRUCTION,
     is_exit_command,
 )
 from data_manager import (
@@ -94,14 +96,20 @@ def _call_llm(prompt: str, max_retries: int = 3) -> str:
     return ""
 
 
-def _call_chat(conversation_history: list, message: str, max_retries: int = 3) -> str:
+def _call_chat(conversation_history: list, message: str, language: str = "English", max_retries: int = 3) -> str:
     """
     Send a message with full conversation history to Groq for context continuity.
     The conversation_history is a list of {"role": ..., "content": ...} dicts.
     Includes automatic retry with backoff for rate limit errors.
+    Supports multilingual responses via language parameter.
     """
+    # Build system prompt with optional language instruction
+    system_content = SYSTEM_PROMPT
+    if language and language != "English":
+        system_content += MULTILINGUAL_INSTRUCTION.format(language=language)
+
     # Build messages with system prompt + history + new message
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages = [{"role": "system", "content": system_content}]
     messages.extend(conversation_history)
     messages.append({"role": "user", "content": message})
 
@@ -130,6 +138,22 @@ def _call_chat(conversation_history: list, message: str, max_retries: int = 3) -
                 print(f"[Chat Error] {e}")
                 return "I apologize, I encountered a brief issue. Could you please repeat that?"
     return "I'm experiencing high traffic right now. Please try again in a moment."
+
+
+# ──────────────────────────────────────────────
+# Sentiment Analysis
+# ──────────────────────────────────────────────
+def analyze_sentiment(user_message: str) -> str:
+    """
+    Analyze the emotional tone of a candidate's message.
+    Returns one of: confident, neutral, enthusiastic, nervous, frustrated.
+    """
+    prompt = SENTIMENT_PROMPT.format(user_message=user_message)
+    result = _call_llm(prompt)
+    # Clean and validate the response
+    sentiment = result.strip().lower().strip('"').strip("'")
+    valid_sentiments = ["confident", "neutral", "enthusiastic", "nervous", "frustrated"]
+    return sentiment if sentiment in valid_sentiments else "neutral"
 
 
 # ──────────────────────────────────────────────
@@ -232,6 +256,7 @@ def process_message(
     candidate_data: dict,
     conversation_history: list,
     exit_pending: bool = False,
+    language: str = "English",
 ) -> tuple:
     """
     Process a user message and return the updated state, bot response, candidate data, 
@@ -277,12 +302,12 @@ def process_message(
 
     # ── STATE: INFO_COLLECTION ──
     if current_state == ConversationState.INFO_COLLECTION:
-        state, response, data = _handle_info_collection(user_message, candidate_data, conversation_history)
+        state, response, data = _handle_info_collection(user_message, candidate_data, conversation_history, language)
         return state, response, data, False
 
     # ── STATE: TECH_ASSESSMENT ──
     elif current_state == ConversationState.TECH_ASSESSMENT:
-        state, response, data = _handle_tech_assessment(user_message, candidate_data, conversation_history)
+        state, response, data = _handle_tech_assessment(user_message, candidate_data, conversation_history, language)
         return state, response, data, False
 
     # ── STATE: SIGN_OFF ──
@@ -295,7 +320,7 @@ def process_message(
     return current_state, "I'm not sure how to respond to that. Let's continue with the interview!", candidate_data, False
 
 
-def _handle_info_collection(user_message: str, candidate: dict, conversation_history: list) -> tuple:
+def _handle_info_collection(user_message: str, candidate: dict, conversation_history: list, language: str = "English") -> tuple:
     """Handle the INFO_COLLECTION state — extract entities and ask for missing fields."""
 
     # Extract entities from user message
@@ -313,7 +338,8 @@ def _handle_info_collection(user_message: str, candidate: dict, conversation_his
             response = _call_chat(
                 conversation_history,
                 f"The candidate provided an invalid email: '{email}'. "
-                "Politely ask them to provide a valid email address."
+                "Politely ask them to provide a valid email address.",
+                language=language,
             )
             return ConversationState.INFO_COLLECTION, response, candidate
 
@@ -364,11 +390,11 @@ def _handle_info_collection(user_message: str, candidate: dict, conversation_his
             missing_fields=", ".join(missing),
             user_message=user_message,
         )
-        response = _call_chat(conversation_history, prompt)
+        response = _call_chat(conversation_history, prompt, language=language)
         return ConversationState.INFO_COLLECTION, response, candidate
 
 
-def _handle_tech_assessment(user_message: str, candidate: dict, conversation_history: list) -> tuple:
+def _handle_tech_assessment(user_message: str, candidate: dict, conversation_history: list, language: str = "English") -> tuple:
     """Handle the TECH_ASSESSMENT state — collect answers to technical questions."""
 
     # Add the answer
@@ -397,7 +423,7 @@ def _handle_tech_assessment(user_message: str, candidate: dict, conversation_his
             user_message=user_message,
             remaining_count=remaining,
         )
-        response = _call_chat(conversation_history, prompt)
+        response = _call_chat(conversation_history, prompt, language=language)
 
         # Ensure the next question is visible
         if next_question not in response:
