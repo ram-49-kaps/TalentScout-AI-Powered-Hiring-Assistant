@@ -81,7 +81,13 @@ if they are present. Return ONLY a valid JSON object with the fields you found.
 - Do NOT guess or infer any values.
 - If a field is not mentioned, set it to null.
 - For tech_stack, normalize names (e.g., "js" → "JavaScript", "py" → "Python", "react" → "React").
+- Use the previous bot question for context to understand what the candidate's response refers to.
+  For example, if the bot asked about years of experience and the candidate replies "10", 
+  extract experience_years as 10.
 - Return ONLY the JSON object, no extra text.
+
+**Previous bot question (for context):**
+{last_bot_message}
 
 **Candidate's message:**
 {user_message}

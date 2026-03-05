@@ -159,12 +159,16 @@ def analyze_sentiment(user_message: str) -> str:
 # ──────────────────────────────────────────────
 # Entity Extraction
 # ──────────────────────────────────────────────
-def extract_entities(user_message: str) -> dict:
+def extract_entities(user_message: str, last_bot_message: str = "") -> dict:
     """
     Use the LLM to extract candidate information from a message.
+    Uses the last bot message as context for ambiguous inputs.
     Returns a dictionary of extracted fields (non-null values only).
     """
-    prompt = ENTITY_EXTRACTION_PROMPT.format(user_message=user_message)
+    prompt = ENTITY_EXTRACTION_PROMPT.format(
+        user_message=user_message,
+        last_bot_message=last_bot_message or "N/A"
+    )
     raw_response = _call_llm(prompt)
 
     try:
@@ -323,8 +327,13 @@ def process_message(
 def _handle_info_collection(user_message: str, candidate: dict, conversation_history: list, language: str = "English") -> tuple:
     """Handle the INFO_COLLECTION state — extract entities and ask for missing fields."""
 
-    # Extract entities from user message
-    extracted = extract_entities(user_message)
+    # Extract entities from user message (with context from last bot question)
+    last_bot_msg = ""
+    for msg in reversed(conversation_history):
+        if msg.get("role") == "assistant":
+            last_bot_msg = msg.get("content", "")
+            break
+    extracted = extract_entities(user_message, last_bot_msg)
 
     # Update candidate data with extracted entities
     if extracted.get("name") and not candidate.get("name"):
