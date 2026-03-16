@@ -1,10 +1,11 @@
+---
 title: TalentScout AI Hiring Assistant
 emoji: 🤖
 colorFrom: blue
 colorTo: purple
 sdk: streamlit
 app_file: app.py
-
+---
 # TalentScout — AI-Powered Hiring Assistant
 
 An intelligent chatbot built with **Python** and **Streamlit** that conducts initial candidate screening interviews for a fictional recruitment agency. Powered by **Groq AI (LLaMA 3.3 70B)**, it collects candidate information through natural conversation and generates tailored technical assessment questions.
