@@ -1,11 +1,9 @@
----
 title: TalentScout AI Hiring Assistant
 emoji: 🤖
 colorFrom: blue
 colorTo: purple
 sdk: streamlit
 app_file: app.py
----
 
 # TalentScout — AI-Powered Hiring Assistant
 
